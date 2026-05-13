@@ -47,7 +47,7 @@ grep -q '"http:herdr"' mise.toml || fail "mise.toml must manage herdr"
 grep -q '"http:neovim"' mise.toml || fail "mise.toml must manage neovim"
 [ -s mise.lock ] || fail "mise.lock is required"
 
-HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" SUMMON_HOME="$tmp_home" SUMMON_SOURCE_DIR="$repo_dir" sh "$repo_dir/summon.sh"
+HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" SUMMON_HOME="$tmp_home" SUMMON_SOURCE_DIR="$repo_dir" SUMMON_MYPI_MODE=skip sh "$repo_dir/summon.sh"
 
 mise="$tmp_home/.local/bin/mise"
 [ -x "$mise" ] || fail "mise was not installed"
@@ -70,6 +70,7 @@ assert_cmd_contains "0.5.8" "herdr version" run_mise herdr --version
 assert_cmd_contains "0.130.0" "codex version" run_mise codex --version
 
 PATH="$tmp_home/.bun/bin:$PATH" command -v mypi >/dev/null || fail "mypi was not installed"
+PATH="$tmp_home/.bun/bin:$PATH" command -v pi >/dev/null || fail "pi was not installed"
 assert_cmd_contains "tmux" "tmux version" tmux -V
 
 grep -q 'mise activate bash' "$tmp_home/.bashrc" || fail "bashrc must initialize mise"

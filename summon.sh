@@ -11,6 +11,7 @@ SUMMON_MISE_LOCK="${SUMMON_MISE_LOCK:-$SUMMON_MISE_DIR/mise.lock}"
 SUMMON_REPO_REF="${SUMMON_REPO_REF:-main}"
 SUMMON_SOURCE_DIR="${SUMMON_SOURCE_DIR:-}"
 SUMMON_OMARCHY_REF="${SUMMON_OMARCHY_REF:-b2d95ee24b09667e652674d8b33eeecad0f528f2}"
+SUMMON_MYPI_MODE="${SUMMON_MYPI_MODE:-background}"
 
 MISE_BIN="${MISE_BIN:-$SUMMON_BIN_DIR/mise}"
 BUN_INSTALL="${BUN_INSTALL:-$SUMMON_HOME/.bun}"
@@ -285,6 +286,26 @@ configure_git() {
 
 install_node_clis() {
   mise_exec exec -- bun install -g github:upamune/mypi
+  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+    log "would run mypi"
+  else
+    if [ -x "$MISE_BIN" ]; then
+      mise_cmd="$MISE_BIN"
+    else
+      mise_cmd="mise"
+    fi
+    if ! command -v pi >/dev/null 2>&1; then
+      PATH="$BUN_INSTALL/bin:$PATH" "$mise_cmd" exec -- bun install -g @earendil-works/pi-coding-agent
+    fi
+    if [ "$SUMMON_MYPI_MODE" = "sync" ]; then
+      PATH="$BUN_INSTALL/bin:$PATH" "$mise_cmd" exec -- mypi
+    elif [ "$SUMMON_MYPI_MODE" != "skip" ]; then
+      log_file="$SUMMON_HOME/.cache/summon/mypi.log"
+      ensure_dir "$(dirname "$log_file")"
+      PATH="$BUN_INSTALL/bin:$PATH" nohup "$mise_cmd" exec -- mypi >"$log_file" 2>&1 &
+      log "mypi setup is running in the background: $log_file"
+    fi
+  fi
 }
 
 main() {
