@@ -9,7 +9,11 @@ uv = "0.9.27"
 shellcheck = "0.11.0"
 shfmt = "3.13.1"
 "github:ogulcancelik/herdr" = "0.5.8"
+"npm:@openai/codex" = "0.130.0"
 
 [settings]
 experimental = true
 yes = true
+
+[settings.npm]
+package_manager = "bun"

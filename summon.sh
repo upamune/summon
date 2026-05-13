@@ -92,6 +92,32 @@ append_once() {
   grep -Fqx "$line" "$file" || printf '%s\n' "$line" >>"$file"
 }
 
+prepend_managed_block() {
+  file="$1"
+  block_name="$2"
+  block_content="$3"
+  start="# summon: begin $block_name"
+  end="# summon: end $block_name"
+  ensure_dir "$(dirname "$file")"
+  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+    log "would ensure $block_name block near top of $file"
+    return 0
+  fi
+  touch "$file"
+  tmp="${file}.tmp.$$"
+  {
+    printf '%s\n' "$start"
+    printf '%s\n' "$block_content"
+    printf '%s\n\n' "$end"
+    awk -v start="$start" -v end="$end" '
+      $0 == start { skip = 1; next }
+      $0 == end { skip = 0; next }
+      skip != 1 { print }
+    ' "$file"
+  } >"$tmp"
+  mv "$tmp" "$file"
+}
+
 install_system_packages() {
   if need_cmd apt-get; then
     run ${SUDO:+"$SUDO"} apt-get update
@@ -156,6 +182,12 @@ install_omarchy_configs() {
   [ -e "$SUMMON_HOME/.tmux.conf" ] || run ln -s "$SUMMON_CONFIG_DIR/tmux/tmux.conf" "$SUMMON_HOME/.tmux.conf"
 }
 
+configure_mise_shell() {
+  # shellcheck disable=SC2016
+  prepend_managed_block "$SUMMON_HOME/.bashrc" "mise" 'export PATH="$HOME/.local/bin:$PATH"
+eval "$(mise activate bash)"'
+}
+
 install_starship() {
   if [ "$SUMMON_DRY_RUN" = "1" ]; then
     log "would apply starship pure preset"
@@ -171,6 +203,11 @@ install_atuin_shell() {
   append_once "$SUMMON_HOME/.bashrc" 'eval "$(atuin init bash)"'
 }
 
+configure_bun_path() {
+  # shellcheck disable=SC2016
+  append_once "$SUMMON_HOME/.bashrc" 'export PATH="$HOME/.bun/bin:$PATH"'
+}
+
 configure_git() {
   run git config --global user.email "info@serizawa.me"
   run git config --global user.name "Yu SERIZAWA(@upamune)"
@@ -178,7 +215,6 @@ configure_git() {
 
 install_node_clis() {
   mise_exec exec -- bun install -g github:upamune/mypi
-  mise_exec exec -- npm install -g @openai/codex
 }
 
 main() {
@@ -190,8 +226,10 @@ main() {
   install_mise_config
   install_mise_tools
   install_omarchy_configs
+  configure_mise_shell
   install_starship
   install_atuin_shell
+  configure_bun_path
   configure_git
   install_node_clis
   log "done"
