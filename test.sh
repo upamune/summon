@@ -2,6 +2,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
+repo_dir="$PWD"
 
 fail() {
   echo "test: $*" >&2
@@ -11,6 +12,11 @@ fail() {
 sh -n summon.sh
 bash -n test.sh
 bash -n bin/mise
+
+lint_root="$(mktemp -d)"
+trap 'rm -rf "$lint_root"' EXIT
+MISE_CONFIG_FILE=/dev/null "$repo_dir/bin/mise" exec -C "$lint_root" shellcheck@0.11.0 -- shellcheck "$repo_dir/summon.sh" "$repo_dir/test.sh"
+MISE_CONFIG_FILE=/dev/null "$repo_dir/bin/mise" exec -C "$lint_root" shfmt@3.13.1 -- shfmt -d -i 2 -ci "$repo_dir/summon.sh" "$repo_dir/test.sh"
 
 grep -q 'SUMMON_DRY_RUN' summon.sh || fail "summon.sh must support dry-run"
 grep -q 'SUMMON_MISE_CONFIG' summon.sh || fail "summon.sh must install global mise config"
@@ -25,11 +31,13 @@ grep -q 'bin/mise' summon.sh || fail "summon.sh must install mise through genera
 grep -q 'github:upamune/mypi' summon.sh || fail "summon.sh must install mypi"
 grep -q '@openai/codex' summon.sh || fail "summon.sh must install codex cli"
 grep -q '"github:ogulcancelik/herdr" = "0.5.8"' mise.toml || fail "mise.toml must manage herdr"
+grep -q 'shellcheck = "0.11.0"' mise.toml || fail "mise.toml must manage shellcheck"
+grep -q 'shfmt = "3.13.1"' mise.toml || fail "mise.toml must manage shfmt"
 ! grep -q '"latest"' mise.toml || fail "mise.toml must not use latest"
 [ -s mise.lock ] || fail "mise.lock is required"
 
 tmp_home="$(mktemp -d)"
-trap 'rm -rf "$tmp_home"' EXIT
+trap 'rm -rf "$lint_root" "$tmp_home"' EXIT
 
 SUMMON_DRY_RUN=1 SUMMON_HOME="$tmp_home" HOME="$tmp_home" sh ./summon.sh >"$tmp_home/dry-run.log"
 grep -q 'linux-' "$tmp_home/dry-run.log" || fail "dry-run did not execute"

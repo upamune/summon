@@ -46,7 +46,10 @@ detect_arch() {
   case "$(uname -m)" in
     x86_64 | amd64) printf 'amd64' ;;
     aarch64 | arm64) printf 'arm64' ;;
-    *) log "unsupported architecture: $(uname -m)"; exit 1 ;;
+    *)
+      log "unsupported architecture: $(uname -m)"
+      exit 1
+      ;;
   esac
 }
 
@@ -159,10 +162,12 @@ install_starship() {
   else
     mise_direct exec -- starship preset pure-preset -o "$SUMMON_CONFIG_DIR/starship.toml"
   fi
+  # shellcheck disable=SC2016
   append_once "$SUMMON_HOME/.bashrc" 'eval "$(starship init bash)"'
 }
 
 install_atuin_shell() {
+  # shellcheck disable=SC2016
   append_once "$SUMMON_HOME/.bashrc" 'eval "$(atuin init bash)"'
 }
 

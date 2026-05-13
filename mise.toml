@@ -6,6 +6,8 @@ rust = "1.89.0"
 starship = "1.25.1"
 atuin = "18.16.1"
 uv = "0.9.27"
+shellcheck = "0.11.0"
+shfmt = "3.13.1"
 "github:ogulcancelik/herdr" = "0.5.8"
 
 [settings]
