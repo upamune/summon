@@ -16,5 +16,4 @@ curl -fsSL https://raw.githubusercontent.com/upamune/summon/main/summon.sh | sh
 - Starship with the pure preset
 - Atuin shell history
 - tmux auto attach on SSH login
-- mypi and Pi setup in the background
-- git user config for `Yu SERIZAWA(@upamune) <info@serizawa.me>`
+- [mypi](https://github.com/upamune/mypi) and Pi setup in the background
