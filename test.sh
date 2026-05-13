@@ -41,6 +41,7 @@ HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CAC
 HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" "$repo_dir/bin/mise" exec --locked -C "$repo_dir" shfmt@3.13.1 -- shfmt -d -i 2 -ci "$repo_dir/summon.sh" "$repo_dir/test.sh"
 
 ! grep -q 'npm install -g' summon.sh || fail "summon.sh must not use npm install -g"
+! grep -qi 'sudo' summon.sh Dockerfile || fail "summon must not require sudo"
 ! grep -q '"latest"' mise.toml || fail "mise.toml must not use latest"
 grep -q '"http:herdr"' mise.toml || fail "mise.toml must manage herdr"
 grep -q '"http:neovim"' mise.toml || fail "mise.toml must manage neovim"
@@ -75,6 +76,7 @@ grep -q 'mise activate bash' "$tmp_home/.bashrc" || fail "bashrc must initialize
 grep -q '.bun/bin' "$tmp_home/.bashrc" || fail "bashrc must add bun global bin"
 grep -q 'starship init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize starship"
 grep -q 'atuin init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize atuin"
+HOME="$tmp_home" bash -ic 'true' >/dev/null 2>&1 || fail "bashrc must load without errors"
 
 [ "$(HOME="$tmp_home" git config --global user.email)" = "info@serizawa.me" ] || fail "git email mismatch"
 [ "$(HOME="$tmp_home" git config --global user.name)" = "Yu SERIZAWA(@upamune)" ] || fail "git name mismatch"

@@ -8,10 +8,9 @@ ENV HOME=/home/summon
 ENV SUMMON_REPO_REF=${SUMMON_REPO_REF}
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl git bash sudo file \
+  && apt-get install -y --no-install-recommends ca-certificates curl git bash file tmux tar gzip unzip xz-utils build-essential \
   && rm -rf /var/lib/apt/lists/* \
-  && useradd -m -s /bin/bash summon \
-  && echo 'summon ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/summon
+  && useradd -m -s /bin/bash summon
 
 WORKDIR /workspace
 COPY . /workspace

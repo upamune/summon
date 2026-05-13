@@ -14,7 +14,6 @@ SUMMON_OMARCHY_REF="${SUMMON_OMARCHY_REF:-b2d95ee24b09667e652674d8b33eeecad0f528
 
 MISE_BIN="${MISE_BIN:-$SUMMON_BIN_DIR/mise}"
 BUN_INSTALL="${BUN_INSTALL:-$SUMMON_HOME/.bun}"
-SUDO=""
 
 export BUN_INSTALL
 export PATH="$SUMMON_BIN_DIR:$BUN_INSTALL/bin:$PATH"
@@ -37,16 +36,6 @@ need_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-init_sudo() {
-  if [ "$(id -u)" -eq 0 ]; then
-    SUDO=""
-  elif need_cmd sudo; then
-    SUDO="sudo"
-  else
-    SUDO=""
-  fi
-}
-
 detect_arch() {
   case "$(uname -m)" in
     x86_64 | amd64) printf 'amd64' ;;
@@ -63,24 +52,24 @@ ensure_dir() {
 }
 
 download() {
-  url="$1"
-  dest="$2"
-  ensure_dir "$(dirname "$dest")"
-  tmp="${dest}.tmp.$$"
+  download_url="$1"
+  download_dest="$2"
+  ensure_dir "$(dirname "$download_dest")"
+  tmp="${download_dest}.tmp.$$"
   trap 'rm -f "$tmp"' HUP INT TERM EXIT
   if need_cmd curl; then
-    run curl -fsSL --proto '=https' --tlsv1.2 "$url" -o "$tmp"
+    run curl -fsSL --proto '=https' --tlsv1.2 "$download_url" -o "$tmp"
   elif need_cmd wget; then
-    run wget -qO "$tmp" "$url"
+    run wget -qO "$tmp" "$download_url"
   else
     log "curl or wget is required"
     exit 1
   fi
   if [ "$SUMMON_DRY_RUN" != "1" ]; then
-    if [ -f "$dest" ] && [ ! -f "${dest}.bak" ]; then
-      cp "$dest" "${dest}.bak"
+    if [ -f "$download_dest" ] && [ ! -f "${download_dest}.bak" ]; then
+      cp "$download_dest" "${download_dest}.bak"
     fi
-    mv "$tmp" "$dest"
+    mv "$tmp" "$download_dest"
   fi
   trap - HUP INT TERM EXIT
 }
@@ -138,15 +127,20 @@ prepend_managed_block() {
 }
 
 install_system_packages() {
+  if [ "$(id -u)" -ne 0 ]; then
+    log "not root; skipping system packages"
+    return 0
+  fi
+
   if need_cmd apt-get; then
-    run ${SUDO:+"$SUDO"} apt-get update
-    run ${SUDO:+"$SUDO"} apt-get install -y ca-certificates curl git tar gzip unzip xz-utils bash tmux build-essential
+    run apt-get update
+    run apt-get install -y ca-certificates curl git tar gzip unzip xz-utils bash tmux build-essential
   elif need_cmd dnf; then
-    run ${SUDO:+"$SUDO"} dnf install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
+    run dnf install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
   elif need_cmd yum; then
-    run ${SUDO:+"$SUDO"} yum install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
+    run yum install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
   elif need_cmd apk; then
-    run ${SUDO:+"$SUDO"} apk add --no-cache ca-certificates curl git tar gzip unzip xz bash tmux build-base
+    run apk add --no-cache ca-certificates curl git tar gzip unzip xz bash tmux build-base
   else
     log "no supported package manager found; skipping system packages"
   fi
@@ -203,11 +197,24 @@ install_mise_tools() {
 }
 
 install_omarchy_configs() {
-  base="https://raw.githubusercontent.com/basecamp/omarchy/$SUMMON_OMARCHY_REF"
-  download "$base/default/bashrc" "$SUMMON_HOME/.bashrc"
+  omarchy_base="https://raw.githubusercontent.com/basecamp/omarchy/$SUMMON_OMARCHY_REF"
+  download "$omarchy_base/default/bashrc" "$SUMMON_HOME/.bashrc"
+  install_omarchy_bash_defaults
   ensure_dir "$SUMMON_CONFIG_DIR/tmux"
-  download "$base/config/tmux/tmux.conf" "$SUMMON_CONFIG_DIR/tmux/tmux.conf"
+  download "$omarchy_base/config/tmux/tmux.conf" "$SUMMON_CONFIG_DIR/tmux/tmux.conf"
   [ -e "$SUMMON_HOME/.tmux.conf" ] || run ln -s "$SUMMON_CONFIG_DIR/tmux/tmux.conf" "$SUMMON_HOME/.tmux.conf"
+}
+
+install_omarchy_bash_defaults() {
+  omarchy_bash_base="https://raw.githubusercontent.com/basecamp/omarchy/$SUMMON_OMARCHY_REF/default/bash"
+  omarchy_bash_dest="$SUMMON_HOME/.local/share/omarchy/default/bash"
+  ensure_dir "$omarchy_bash_dest/fns"
+  for file in aliases completions envs functions init inputrc rc shell; do
+    download "$omarchy_bash_base/$file" "$omarchy_bash_dest/$file"
+  done
+  for file in compression drives ssh-port-forwarding tmux transcoding worktrees; do
+    download "$omarchy_bash_base/fns/$file" "$omarchy_bash_dest/fns/$file"
+  done
 }
 
 configure_mise_shell() {
@@ -246,7 +253,6 @@ install_node_clis() {
 }
 
 main() {
-  init_sudo
   arch="$(detect_arch)"
   log "setting up linux-$arch under $SUMMON_HOME"
   install_system_packages
@@ -261,6 +267,7 @@ main() {
   configure_git
   install_node_clis
   log "done"
+  log "restart your shell with: exec bash"
 }
 
 main "$@"
