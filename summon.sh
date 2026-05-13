@@ -126,6 +126,32 @@ prepend_managed_block() {
   mv "$tmp" "$file"
 }
 
+append_managed_block() {
+  file="$1"
+  block_name="$2"
+  block_content="$3"
+  start="# summon: begin $block_name"
+  end="# summon: end $block_name"
+  ensure_dir "$(dirname "$file")"
+  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+    log "would ensure $block_name block in $file"
+    return 0
+  fi
+  touch "$file"
+  tmp="${file}.tmp.$$"
+  awk -v start="$start" -v end="$end" '
+    $0 == start { skip = 1; next }
+    $0 == end { skip = 0; next }
+    skip != 1 { print }
+  ' "$file" >"$tmp"
+  {
+    printf '\n%s\n' "$start"
+    printf '%s\n' "$block_content"
+    printf '%s\n' "$end"
+  } >>"$tmp"
+  mv "$tmp" "$file"
+}
+
 install_system_packages() {
   if [ "$(id -u)" -ne 0 ]; then
     log "not root; skipping system packages"
@@ -243,6 +269,15 @@ configure_bun_path() {
   append_once "$SUMMON_HOME/.bashrc" 'export PATH="$HOME/.bun/bin:$PATH"'
 }
 
+configure_tmux_auto_attach() {
+  # shellcheck disable=SC2016
+  append_managed_block "$SUMMON_HOME/.bashrc" "tmux" 'if [ -z "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then
+  if [ -n "${SSH_TTY:-}" ] || [ -n "${SSH_CONNECTION:-}" ] || [ "${SUMMON_AUTO_TMUX:-}" = "1" ]; then
+    exec tmux new-session -A -s main
+  fi
+fi'
+}
+
 configure_git() {
   run git config --global user.email "info@serizawa.me"
   run git config --global user.name "Yu SERIZAWA(@upamune)"
@@ -264,6 +299,7 @@ main() {
   install_starship
   install_atuin_shell
   configure_bun_path
+  configure_tmux_auto_attach
   configure_git
   install_node_clis
   log "done"

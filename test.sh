@@ -76,6 +76,7 @@ grep -q 'mise activate bash' "$tmp_home/.bashrc" || fail "bashrc must initialize
 grep -q '.bun/bin' "$tmp_home/.bashrc" || fail "bashrc must add bun global bin"
 grep -q 'starship init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize starship"
 grep -q 'atuin init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize atuin"
+grep -q 'tmux new-session -A -s main' "$tmp_home/.bashrc" || fail "bashrc must auto attach tmux"
 HOME="$tmp_home" bash -ic 'true' >/dev/null 2>&1 || fail "bashrc must load without errors"
 
 [ "$(HOME="$tmp_home" git config --global user.email)" = "info@serizawa.me" ] || fail "git email mismatch"
