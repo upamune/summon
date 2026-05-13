@@ -72,50 +72,6 @@ url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.9/bun-linux-x64
 checksum = "sha256:40ea1b2b209d393a07e06299d2d19a31710f1e55d15811a193bfa7c9dd757e01"
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.9/bun-linux-x64-musl-baseline.zip"
 
-[[tools."github:ogulcancelik/herdr"]]
-version = "0.5.8"
-backend = "github:ogulcancelik/herdr"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-arm64"]
-checksum = "sha256:632218bc788440415f037d1cfc319d4c1661885daf4e64feb40f7bb702665461"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-aarch64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395303"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-arm64-musl"]
-checksum = "sha256:632218bc788440415f037d1cfc319d4c1661885daf4e64feb40f7bb702665461"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-aarch64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395303"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-x64"]
-checksum = "sha256:ce6c2b0ad99201c210c1572214ac2f97aa29873196c17204d13e75fb2cbba8c1"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395304"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-x64-baseline"]
-checksum = "sha256:ce6c2b0ad99201c210c1572214ac2f97aa29873196c17204d13e75fb2cbba8c1"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395304"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-x64-musl"]
-checksum = "sha256:ce6c2b0ad99201c210c1572214ac2f97aa29873196c17204d13e75fb2cbba8c1"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395304"
-
-[tools."github:ogulcancelik/herdr"."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:ce6c2b0ad99201c210c1572214ac2f97aa29873196c17204d13e75fb2cbba8c1"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395304"
-
-[tools."github:ogulcancelik/herdr"."platforms.macos-arm64"]
-checksum = "sha256:bc58d6c18db2a2d05c98db2d45aef84b31d6ecad233241c63ed16af9bba04dfd"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-macos-aarch64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395302"
-
-[tools."github:ogulcancelik/herdr"."platforms.macos-x64"]
-checksum = "sha256:e6f61502655d81fe667391d5b81d456580617c98873c072563504d943313bdfd"
-url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-macos-x86_64"
-url_api = "https://api.github.com/repos/ogulcancelik/herdr/releases/assets/418395305"
-
 [[tools.go]]
 version = "1.26.3"
 backend = "core:go"
@@ -155,6 +111,30 @@ url = "https://dl.google.com/go/go1.26.3.darwin-amd64.tar.gz"
 [tools.go."platforms.windows-x64"]
 checksum = "sha256:20d2ceafb4ed41b96b879010927b28bc92a5be57a7c1801ce365a9ca51d3224a"
 url = "https://dl.google.com/go/go1.26.3.windows-amd64.zip"
+
+[[tools."http:herdr"]]
+version = "0.5.8"
+backend = "http:herdr"
+
+[tools."http:herdr"."platforms.linux-arm64"]
+checksum = "sha256:632218bc788440415f037d1cfc319d4c1661885daf4e64feb40f7bb702665461"
+url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-aarch64"
+
+[tools."http:herdr"."platforms.linux-x64"]
+checksum = "sha256:ce6c2b0ad99201c210c1572214ac2f97aa29873196c17204d13e75fb2cbba8c1"
+url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64"
+
+[[tools."http:neovim"]]
+version = "0.12.2"
+backend = "http:neovim"
+
+[tools."http:neovim"."platforms.linux-arm64"]
+checksum = "sha256:f697d4e4582b6e4b5c3c26e76e06ce26efa08ba1768e03fd2733fcc422bb0490"
+url = "https://github.com/neovim/neovim/releases/download/v0.12.2/nvim-linux-arm64.tar.gz"
+
+[tools."http:neovim"."platforms.linux-x64"]
+checksum = "sha256:31cf85945cb600d96cdf69f88bc68bec814acbff50863c5546adef3a1bcef260"
+url = "https://github.com/neovim/neovim/releases/download/v0.12.2/nvim-linux-x86_64.tar.gz"
 
 [[tools.node]]
 version = "24.12.0"

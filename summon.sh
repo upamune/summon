@@ -9,10 +9,15 @@ SUMMON_MISE_DIR="${SUMMON_MISE_DIR:-$SUMMON_CONFIG_DIR/mise}"
 SUMMON_MISE_CONFIG="${SUMMON_MISE_CONFIG:-$SUMMON_MISE_DIR/config.toml}"
 SUMMON_MISE_LOCK="${SUMMON_MISE_LOCK:-$SUMMON_MISE_DIR/mise.lock}"
 SUMMON_REPO_REF="${SUMMON_REPO_REF:-main}"
+SUMMON_SOURCE_DIR="${SUMMON_SOURCE_DIR:-}"
 SUMMON_OMARCHY_REF="${SUMMON_OMARCHY_REF:-b2d95ee24b09667e652674d8b33eeecad0f528f2}"
 
 MISE_BIN="${MISE_BIN:-$SUMMON_BIN_DIR/mise}"
+BUN_INSTALL="${BUN_INSTALL:-$SUMMON_HOME/.bun}"
 SUDO=""
+
+export BUN_INSTALL
+export PATH="$SUMMON_BIN_DIR:$BUN_INSTALL/bin:$PATH"
 
 log() {
   printf '%s\n' "summon: $*"
@@ -80,6 +85,20 @@ download() {
   trap - HUP INT TERM EXIT
 }
 
+install_file() {
+  src="$1"
+  dest="$2"
+  ensure_dir "$(dirname "$dest")"
+  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+    log "would install $src to $dest"
+    return 0
+  fi
+  if [ -f "$dest" ] && [ ! -f "${dest}.bak" ]; then
+    cp "$dest" "${dest}.bak"
+  fi
+  cp "$src" "$dest"
+}
+
 append_once() {
   file="$1"
   line="$2"
@@ -139,8 +158,12 @@ install_mise() {
     return 0
   fi
   ensure_dir "$SUMMON_BIN_DIR"
-  base="https://raw.githubusercontent.com/upamune/summon/$SUMMON_REPO_REF"
-  download "$base/bin/mise" "$MISE_BIN"
+  if [ -n "$SUMMON_SOURCE_DIR" ]; then
+    install_file "$SUMMON_SOURCE_DIR/bin/mise" "$MISE_BIN"
+  else
+    base="https://raw.githubusercontent.com/upamune/summon/$SUMMON_REPO_REF"
+    download "$base/bin/mise" "$MISE_BIN"
+  fi
   run chmod +x "$MISE_BIN"
   if [ "$SUMMON_DRY_RUN" != "1" ]; then
     "$MISE_BIN" version >/dev/null
@@ -148,9 +171,14 @@ install_mise() {
 }
 
 install_mise_config() {
-  base="https://raw.githubusercontent.com/upamune/summon/$SUMMON_REPO_REF"
-  download "$base/mise.toml" "$SUMMON_MISE_CONFIG"
-  download "$base/mise.lock" "$SUMMON_MISE_LOCK"
+  if [ -n "$SUMMON_SOURCE_DIR" ]; then
+    install_file "$SUMMON_SOURCE_DIR/mise.toml" "$SUMMON_MISE_CONFIG"
+    install_file "$SUMMON_SOURCE_DIR/mise.lock" "$SUMMON_MISE_LOCK"
+  else
+    base="https://raw.githubusercontent.com/upamune/summon/$SUMMON_REPO_REF"
+    download "$base/mise.toml" "$SUMMON_MISE_CONFIG"
+    download "$base/mise.lock" "$SUMMON_MISE_LOCK"
+  fi
 }
 
 mise_exec() {

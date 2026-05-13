@@ -8,8 +8,22 @@ atuin = "18.16.1"
 uv = "0.9.27"
 shellcheck = "0.11.0"
 shfmt = "3.13.1"
-"github:ogulcancelik/herdr" = "0.5.8"
 "npm:@openai/codex" = "0.130.0"
+
+[tools."http:herdr"]
+version = "0.5.8"
+bin = "herdr"
+
+[tools."http:herdr".platforms]
+linux-arm64 = { url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-aarch64" }
+linux-x64 = { url = "https://github.com/ogulcancelik/herdr/releases/download/v0.5.8/herdr-linux-x86_64" }
+
+[tools."http:neovim"]
+version = "0.12.2"
+
+[tools."http:neovim".platforms]
+linux-arm64 = { url = "https://github.com/neovim/neovim/releases/download/v0.12.2/nvim-linux-arm64.tar.gz" }
+linux-x64 = { url = "https://github.com/neovim/neovim/releases/download/v0.12.2/nvim-linux-x86_64.tar.gz" }
 
 [settings]
 experimental = true

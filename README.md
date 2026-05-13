@@ -1,7 +1,7 @@
 # summon
 
 <p align="center">
-  <img src="assets/logo.png" alt="summon logo" width="480">
+  <img src="assets/logo.png" alt="summon logo" width="720">
 </p>
 
 ```sh

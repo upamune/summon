@@ -16,11 +16,7 @@ RUN apt-get update \
 WORKDIR /workspace
 COPY . /workspace
 RUN chown -R summon:summon /workspace /home/summon
-
-USER root
-RUN ./test.sh
-
 USER summon
-RUN SUMMON_DRY_RUN=1 ./summon.sh
+RUN ./test.sh
 
 CMD ["/bin/bash"]
