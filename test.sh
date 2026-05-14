@@ -84,12 +84,12 @@ HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CAC
 
 grep -q 'mise activate zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize mise"
 grep -q '.bun/bin' "$tmp_home/.zshrc" || fail "zshrc must add bun global bin"
-grep -q 'export LANG=C.UTF-8' "$tmp_home/.zshrc" || fail "zshrc must set a utf-8 fallback locale"
-grep -q 'setopt combining_chars' "$tmp_home/.zshrc" || fail "zshrc must handle unicode combining chars"
-grep -q 'bindkey -e' "$tmp_home/.zshrc" || fail "zshrc must use emacs key bindings"
-grep -q 'bindkey "\^?" backward-delete-char' "$tmp_home/.zshrc" || fail "zshrc must bind backspace"
-grep -q 'bindkey "\^U" backward-kill-line' "$tmp_home/.zshrc" || fail "zshrc must bind ctrl-u"
-grep -q "STARSHIP_CONFIG=\"$tmp_config/starship-zsh.toml\"" "$tmp_home/.zshrc" || fail "zshrc must use the zsh starship config"
+grep -Fq 'export LANG=C.UTF-8' "$tmp_home/.zshrc" || fail "zshrc must set a utf-8 fallback locale"
+grep -Fq 'setopt combining_chars' "$tmp_home/.zshrc" || fail "zshrc must handle unicode combining chars"
+grep -Fq 'bindkey -e' "$tmp_home/.zshrc" || fail "zshrc must use emacs key bindings"
+grep -Fq 'bindkey "^?" backward-delete-char' "$tmp_home/.zshrc" || fail "zshrc must bind backspace"
+grep -Fq 'bindkey "^U" backward-kill-line' "$tmp_home/.zshrc" || fail "zshrc must bind ctrl-u"
+grep -Fq "STARSHIP_CONFIG=\"$tmp_config/starship-zsh.toml\"" "$tmp_home/.zshrc" || fail "zshrc must use the zsh starship config"
 grep -q 'starship init zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize starship"
 grep -q 'atuin init zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize atuin"
 grep -q 'tmux new-session -A -s main' "$tmp_home/.zshrc" || fail "zshrc must auto attach tmux"
@@ -97,8 +97,8 @@ if command -v zsh >/dev/null 2>&1; then
   HOME="$tmp_home" zsh -ic 'true' >/dev/null 2>&1 || fail "zshrc must load without errors"
 fi
 
-grep -q 'success_symbol = "\\[>\\](purple)"' "$tmp_config/starship-zsh.toml" || fail "zsh starship prompt must use ascii success symbol"
-grep -q 'untracked = ""' "$tmp_config/starship-zsh.toml" || fail "zsh starship git status must avoid hidden glyphs"
+grep -Fq 'success_symbol = "[>](purple)"' "$tmp_config/starship-zsh.toml" || fail "zsh starship prompt must use ascii success symbol"
+grep -Fq 'untracked = ""' "$tmp_config/starship-zsh.toml" || fail "zsh starship git status must avoid hidden glyphs"
 
 [ "$(HOME="$tmp_home" git config --global user.email)" = "info@serizawa.me" ] || fail "git email mismatch"
 [ "$(HOME="$tmp_home" git config --global user.name)" = "Yu SERIZAWA(@upamune)" ] || fail "git name mismatch"
