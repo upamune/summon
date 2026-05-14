@@ -283,10 +283,96 @@ configure_mise_shell() {
 eval "$(mise activate '"$shell_name"')"'
 }
 
+configure_zsh_shell_defaults() {
+  shell_rc="$1"
+  # shellcheck disable=SC2016
+  append_managed_block "$shell_rc" "zsh-defaults" 'if [ -z "${LANG:-}" ]; then
+  export LANG=C.UTF-8
+fi
+case "${LC_CTYPE:-${LANG:-}}" in
+  *UTF-8* | *utf8* | *UTF8*) ;;
+  *) export LC_CTYPE="${LANG:-C.UTF-8}" ;;
+esac
+setopt no_beep 2>/dev/null || true
+setopt combining_chars 2>/dev/null || true
+bindkey -e
+bindkey "^?" backward-delete-char
+bindkey "^H" backward-delete-char
+bindkey "^U" backward-kill-line
+if [ -t 0 ]; then
+  stty erase "^?" 2>/dev/null || true
+fi'
+}
+
+write_starship_config() {
+  starship_config="$1"
+  ensure_dir "$SUMMON_CONFIG_DIR"
+  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+    log "would write starship config to $starship_config"
+    return 0
+  fi
+  cat >"$starship_config" <<'EOF'
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$cmd_duration\
+$line_break\
+$python\
+$character"""
+
+[directory]
+style = "blue"
+
+[character]
+success_symbol = "[>](purple)"
+error_symbol = "[>](red)"
+vimcmd_symbol = "[<](green)"
+
+[git_branch]
+format = "[$branch]($style)"
+style = "bright-black"
+
+[git_status]
+format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](218) ($ahead_behind$stashed)]($style)"
+style = "cyan"
+conflicted = ""
+untracked = ""
+modified = ""
+staged = ""
+renamed = ""
+deleted = ""
+stashed = "="
+
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "bright-black"
+
+[cmd_duration]
+format = "[$duration]($style) "
+style = "yellow"
+
+[python]
+format = "[$virtualenv]($style) "
+style = "bright-black"
+detect_extensions = []
+detect_files = []
+EOF
+}
+
 install_starship() {
   shell_name="$1"
   shell_rc="$2"
-  if [ "$SUMMON_DRY_RUN" = "1" ]; then
+  if [ "$shell_name" = "zsh" ]; then
+    starship_config="$SUMMON_CONFIG_DIR/starship-zsh.toml"
+    write_starship_config "$starship_config"
+    append_once "$shell_rc" "export STARSHIP_CONFIG=\"$starship_config\""
+  elif [ "$SUMMON_DRY_RUN" = "1" ]; then
     log "would apply starship pure preset"
   else
     mise_direct exec -- starship preset pure-preset -o "$SUMMON_CONFIG_DIR/starship.toml"
@@ -358,6 +444,9 @@ main() {
   install_mise_tools
   install_omarchy_configs "$shell_name"
   configure_mise_shell "$shell_name" "$shell_rc"
+  if [ "$shell_name" = "zsh" ]; then
+    configure_zsh_shell_defaults "$shell_rc"
+  fi
   install_starship "$shell_name" "$shell_rc"
   install_atuin_shell "$shell_name" "$shell_rc"
   configure_bun_path "$shell_rc"
