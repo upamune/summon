@@ -12,7 +12,7 @@ curl -fsSL https://raw.githubusercontent.com/upamune/summon/main/summon.sh | sh
 
 - mise with global `mise.toml` and `mise.lock`
 - bun, node, go, rust, uv, neovim, shellcheck, shfmt, herdr, and OpenAI Codex CLI
-- Omarchy `bashrc` and `tmux.conf`
+- Shell rc (`.bashrc` or `.zshrc`) and `tmux.conf`
 - Starship with the pure preset
 - Atuin shell history
 - tmux auto attach on SSH login

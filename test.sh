@@ -47,7 +47,7 @@ grep -q '"http:herdr"' mise.toml || fail "mise.toml must manage herdr"
 grep -q '"http:neovim"' mise.toml || fail "mise.toml must manage neovim"
 [ -s mise.lock ] || fail "mise.lock is required"
 
-HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" SUMMON_HOME="$tmp_home" SUMMON_SOURCE_DIR="$repo_dir" SUMMON_MYPI_MODE=skip sh "$repo_dir/summon.sh"
+HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" SUMMON_HOME="$tmp_home" SUMMON_SOURCE_DIR="$repo_dir" SUMMON_MYPI_MODE=skip SUMMON_SHELL=bash sh "$repo_dir/summon.sh"
 
 mise="$tmp_home/.local/bin/mise"
 [ -x "$mise" ] || fail "mise was not installed"
@@ -79,6 +79,17 @@ grep -q 'starship init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize
 grep -q 'atuin init bash' "$tmp_home/.bashrc" || fail "bashrc must initialize atuin"
 grep -q 'tmux new-session -A -s main' "$tmp_home/.bashrc" || fail "bashrc must auto attach tmux"
 HOME="$tmp_home" bash -ic 'true' >/dev/null 2>&1 || fail "bashrc must load without errors"
+
+HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_config" XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" SUMMON_HOME="$tmp_home" SUMMON_SOURCE_DIR="$repo_dir" SUMMON_MYPI_MODE=skip SUMMON_SHELL=zsh sh "$repo_dir/summon.sh"
+
+grep -q 'mise activate zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize mise"
+grep -q '.bun/bin' "$tmp_home/.zshrc" || fail "zshrc must add bun global bin"
+grep -q 'starship init zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize starship"
+grep -q 'atuin init zsh' "$tmp_home/.zshrc" || fail "zshrc must initialize atuin"
+grep -q 'tmux new-session -A -s main' "$tmp_home/.zshrc" || fail "zshrc must auto attach tmux"
+if command -v zsh >/dev/null 2>&1; then
+  HOME="$tmp_home" zsh -ic 'true' >/dev/null 2>&1 || fail "zshrc must load without errors"
+fi
 
 [ "$(HOME="$tmp_home" git config --global user.email)" = "info@serizawa.me" ] || fail "git email mismatch"
 [ "$(HOME="$tmp_home" git config --global user.name)" = "Yu SERIZAWA(@upamune)" ] || fail "git name mismatch"

@@ -37,6 +37,34 @@ need_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
+detect_default_shell() {
+  shell_path="${SUMMON_SHELL:-${SHELL:-/bin/bash}}"
+  case "$shell_path" in
+    */bash | bash) printf 'bash' ;;
+    */zsh | zsh) printf 'zsh' ;;
+    *)
+      log "unsupported default shell: $shell_path; falling back to bash"
+      printf 'bash'
+      ;;
+  esac
+}
+
+shell_rc_file() {
+  shell_name="$1"
+  case "$shell_name" in
+    bash)
+      printf '%s/.bashrc' "$SUMMON_HOME"
+      ;;
+    zsh)
+      printf '%s/.zshrc' "${ZDOTDIR:-$SUMMON_HOME}"
+      ;;
+    *)
+      log "unsupported shell: $shell_name"
+      exit 1
+      ;;
+  esac
+}
+
 detect_arch() {
   case "$(uname -m)" in
     x86_64 | amd64) printf 'amd64' ;;
@@ -161,13 +189,13 @@ install_system_packages() {
 
   if need_cmd apt-get; then
     run apt-get update
-    run apt-get install -y ca-certificates curl git tar gzip unzip xz-utils bash tmux build-essential
+    run apt-get install -y ca-certificates curl git tar gzip unzip xz-utils bash zsh tmux build-essential
   elif need_cmd dnf; then
-    run dnf install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
+    run dnf install -y ca-certificates curl git tar gzip unzip xz bash zsh tmux gcc gcc-c++ make
   elif need_cmd yum; then
-    run yum install -y ca-certificates curl git tar gzip unzip xz bash tmux gcc gcc-c++ make
+    run yum install -y ca-certificates curl git tar gzip unzip xz bash zsh tmux gcc gcc-c++ make
   elif need_cmd apk; then
-    run apk add --no-cache ca-certificates curl git tar gzip unzip xz bash tmux build-base
+    run apk add --no-cache ca-certificates curl git tar gzip unzip xz bash zsh tmux build-base
   else
     log "no supported package manager found; skipping system packages"
   fi
@@ -224,9 +252,12 @@ install_mise_tools() {
 }
 
 install_omarchy_configs() {
+  shell_name="$1"
   omarchy_base="https://raw.githubusercontent.com/basecamp/omarchy/$SUMMON_OMARCHY_REF"
-  download "$omarchy_base/default/bashrc" "$SUMMON_HOME/.bashrc"
-  install_omarchy_bash_defaults
+  if [ "$shell_name" = "bash" ]; then
+    download "$omarchy_base/default/bashrc" "$SUMMON_HOME/.bashrc"
+    install_omarchy_bash_defaults
+  fi
   ensure_dir "$SUMMON_CONFIG_DIR/tmux"
   download "$omarchy_base/config/tmux/tmux.conf" "$SUMMON_CONFIG_DIR/tmux/tmux.conf"
   [ -e "$SUMMON_HOME/.tmux.conf" ] || run ln -s "$SUMMON_CONFIG_DIR/tmux/tmux.conf" "$SUMMON_HOME/.tmux.conf"
@@ -245,34 +276,42 @@ install_omarchy_bash_defaults() {
 }
 
 configure_mise_shell() {
+  shell_name="$1"
+  shell_rc="$2"
   # shellcheck disable=SC2016
-  prepend_managed_block "$SUMMON_HOME/.bashrc" "mise" 'export PATH="$HOME/.local/bin:$PATH"
-eval "$(mise activate bash)"'
+  prepend_managed_block "$shell_rc" "mise" 'export PATH="$HOME/.local/bin:$PATH"
+eval "$(mise activate '"$shell_name"')"'
 }
 
 install_starship() {
+  shell_name="$1"
+  shell_rc="$2"
   if [ "$SUMMON_DRY_RUN" = "1" ]; then
     log "would apply starship pure preset"
   else
     mise_direct exec -- starship preset pure-preset -o "$SUMMON_CONFIG_DIR/starship.toml"
   fi
   # shellcheck disable=SC2016
-  append_once "$SUMMON_HOME/.bashrc" 'eval "$(starship init bash)"'
+  append_once "$shell_rc" 'eval "$(starship init '"$shell_name"')"'
 }
 
 install_atuin_shell() {
+  shell_name="$1"
+  shell_rc="$2"
   # shellcheck disable=SC2016
-  append_once "$SUMMON_HOME/.bashrc" 'eval "$(atuin init bash)"'
+  append_once "$shell_rc" 'eval "$(atuin init '"$shell_name"')"'
 }
 
 configure_bun_path() {
+  shell_rc="$1"
   # shellcheck disable=SC2016
-  append_once "$SUMMON_HOME/.bashrc" 'export PATH="$HOME/.bun/bin:$PATH"'
+  append_once "$shell_rc" 'export PATH="$HOME/.bun/bin:$PATH"'
 }
 
 configure_tmux_auto_attach() {
+  shell_rc="$1"
   # shellcheck disable=SC2016
-  append_managed_block "$SUMMON_HOME/.bashrc" "tmux" 'if [ -z "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then
+  append_managed_block "$shell_rc" "tmux" 'if [ -z "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then
   if [ -n "${SSH_TTY:-}" ] || [ -n "${SSH_CONNECTION:-}" ] || [ "${SUMMON_AUTO_TMUX:-}" = "1" ]; then
     exec tmux new-session -A -s main
   fi
@@ -310,21 +349,23 @@ install_node_clis() {
 
 main() {
   arch="$(detect_arch)"
-  log "setting up linux-$arch under $SUMMON_HOME"
+  shell_name="$(detect_default_shell)"
+  shell_rc="$(shell_rc_file "$shell_name")"
+  log "setting up linux-$arch for $shell_name under $SUMMON_HOME"
   install_system_packages
   install_mise
   install_mise_config
   install_mise_tools
-  install_omarchy_configs
-  configure_mise_shell
-  install_starship
-  install_atuin_shell
-  configure_bun_path
-  configure_tmux_auto_attach
+  install_omarchy_configs "$shell_name"
+  configure_mise_shell "$shell_name" "$shell_rc"
+  install_starship "$shell_name" "$shell_rc"
+  install_atuin_shell "$shell_name" "$shell_rc"
+  configure_bun_path "$shell_rc"
+  configure_tmux_auto_attach "$shell_rc"
   configure_git
   install_node_clis
   log "done"
-  log "restart your shell with: exec bash"
+  log "restart your shell with: exec $shell_name"
 }
 
 main "$@"
